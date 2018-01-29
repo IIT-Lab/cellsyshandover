@@ -28,7 +28,7 @@ freuse = int(sys.argv[2])
 
 # initializing my drawing, geometry, interference classes
 # respectively
-brush = cs.draw(1.0)
+brush = cs.draw(radius)
 geome = cs.geom(radius)
 intrf = cs.intf(radius, pt)
 
@@ -65,7 +65,7 @@ while(count > 0):
 print(' done !')
 
 # Plot of random user points in the center hexagon
-#brush.drawPointsInHexagon(pointsList, (0, 0), radius)
+brush.drawPointsInHexagon(pointsList, (0, 0), radius, fig1)
 
 cdfFig = pl.figure(2)
 #pl.hist(sirList, 100, label="Reuse " + str(freuse) + ", No Sectoring")
@@ -79,13 +79,13 @@ pl.plot(srt, ff, label="Reuse " + str(freuse) + ", No Sectoring")
 
 fig3 = pl.figure(3)
 ax = fig3.gca()
-figsz = math.ceil((3 * ntiers) * 0.7)
+figsz = math.ceil((3 * ntiers) * 0.8 * radius)
 ax.set_xlim(-figsz, figsz)
 ax.set_ylim(-figsz, figsz)
 ax.set_aspect('equal')
 sectorColorsLight = ["#ddddff", "#007777", "#ffff62"]
 sectorColorsDark = ["#8D8DA2", "#004C4C", "#A2A23E"]
-brush.updateRadius(1.0)
+#brush.updateRadius(radius)
 brush.drawTiersSectored(ntiers, (0, 0), fig3, [sectorColorsDark, sectorColorsLight])
 
 ##############################################################

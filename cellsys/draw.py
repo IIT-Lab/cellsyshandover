@@ -93,7 +93,7 @@ class draw(object):
         while(q < ntiers):
             for i in range(p, q + 1):
                 if((i, r) == (0, 0)):
-                    self.drawHex(i + off[0], r + off[1], fig, '#DB3236')
+                    self.drawHex(i + off[0], r + off[1], fig, '#007777')
                 else:
                     self.drawHex(i + off[0], r + off[1], fig, clr)
             r -= 1
@@ -101,7 +101,7 @@ class draw(object):
         while(p <= 0):
             for i in range(p, q + 1):
                 if((i, r) == (0, 0)):
-                    self.drawHex(i + off[0], r + off[1], fig, '#DB3236')
+                    self.drawHex(i + off[0], r + off[1], fig, '#007777')
                 else:
                     self.drawHex(i + off[0], r + off[1], fig, clr)
             r -= 1
@@ -147,17 +147,17 @@ class draw(object):
         if(freuse == 3):
             ntiersToPlot = 1
         for cell in cells:
-            clr = "#%06x" % random.randint(0, 0xFFFFFF)
+            #clr = "#%06x" % random.randint(0, 0xFFFFFF)
+            clr = "#EEEEEE"
             self.drawTiers(ntiersToPlot, cell, fig, clr)
 
-    def drawPointsInHexagon(self, pointsList, hexCenter, hexRadius):
+    def drawPointsInHexagon(self, pointsList, hexCenter, hexRadius, fig):
         # Plot of random user points in the hexagon
         # need fix for hexCenter not (0, 0)
-        fig = pl.figure()
-        ax = fig.gca()
-        ax.set_xlim(-hexRadius, hexRadius)
-        ax.set_ylim(-hexRadius, hexRadius)
-        ax.set_aspect('equal')
+        #ax = fig.gca()
+        #ax.set_xlim(-hexRadius, hexRadius)
+        #ax.set_ylim(-hexRadius, hexRadius)
+        #ax.set_aspect('equal')
 
         x = hexCenter[0] * np.cos(np.pi / 6)
         y = hexCenter[1] + (hexCenter[0] * np.sin(np.pi / 6))
@@ -165,8 +165,8 @@ class draw(object):
         pointsList = [(center + np.asarray(z)) for z in pointsList]
 
         xsc, ysc = zip(*pointsList)
-        self.updateRadius(hexRadius)
-        self.drawHex(hexCenter[0], hexCenter[1], fig, "#EEEEEE")
+        #self.updateRadius(hexRadius)
+        self.drawHex(0, 0, fig, "#EEEEEE")
         pl.scatter(xsc, ysc, s=0.75, color='#000000', zorder=200)
 
     def updateRadius(self, radius):

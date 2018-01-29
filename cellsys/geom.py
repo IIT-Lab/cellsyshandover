@@ -112,10 +112,31 @@ class geom(object):
             p += 1
         return thelist
 
+    def ijtoxy(self, pij):
+        res = []
+        for point in pij:
+            x = point[0] * np.cos(np.pi / 6)
+            y = point[1] + (point[0] * np.sin(np.pi / 6))
+            res.append((2 * self.redge * x, 2 * self.redge * y))
+        return res
+
+    def lineFromPoints(self, p1, p2, res):
+        p1 = np.asarray(p1)
+        p2 = np.asarray(p2)
+        alphas = np.arange(0, 1, 1 / res)
+        diff = p2 - p1
+        points = [(p1 + (alpha * diff)) for alpha in alphas]
+        return points
+
     def isContainedInHex(self, center, pt):
-        x = center[0] * np.cos(np.pi / 6)
-        y = center[1] + (center[0] * np.sin(np.pi / 6))
-        center = np.asarray([2 * self.redge * x, 2 * self.redge * y])
+        #x = center[0] * np.cos(np.pi / 6)
+        #y = center[1] + (center[0] * np.sin(np.pi / 6))
+        pts = self.ijtoxy([center])
+        x = pts[0][0]
+        y = pts[0][1]
+        center = np.asarray([x, y])
+        #center = np.asarray([2 * self.redge * x, 2 * self.redge * y])
+
         vertices = [(center + z) for z in self.basis]
         theHexagon = Polygon(vertices)
         pp = Point(pt[0], pt[1])

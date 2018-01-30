@@ -1,3 +1,18 @@
+#
+#   EE 764
+#   Wireless & Mobile Communication
+#   Simulation Assignment 1
+#
+#   Code to compare layouts and CDFs for
+#       - Reuse 3 (No Sectoring)
+#       - Reuse 7 (No Sectoring)
+#       - Reuse 1 (120 degree Sectoring)
+#
+#   Author: Ritesh
+#   RollNo: 163079001
+#
+# # # # # # # # # # # # # # # # # # # # #
+
 import cellsys as cs
 import sys
 import numpy as np
@@ -15,7 +30,7 @@ gamma = 3.5
 pt = 30
 
 # no. of random users in the center cell
-npoints = 8000
+npoints = 1000
 # for progress bar
 step = round(npoints / 50)
 
@@ -25,13 +40,13 @@ brush = cs.draw(radius)
 geome = cs.geom(radius)
 intrf = cs.intf(radius, pt)
 
-ntiers = 7
+ntiers = int(sys.argv[1])
 
 ##############################################################
 #  REUSE 3
 ##############################################################
 reusedCells = geome.reuseCells(ntiers, 3)
-if(len(reusedCells) == 1):
+if(reusedCells == []):
     print("No interference !!")
     sys.exit()
 ##############################################################
@@ -67,7 +82,7 @@ pl.plot(srt, ff, label="Reuse 3, No Sectoring")
 #  REUSE 7
 ##############################################################
 reusedCells = geome.reuseCells(ntiers, 7)
-if(len(reusedCells) == 1):
+if(reusedCells == []):
     print("No interference !!")
     sys.exit()
 ##############################################################
@@ -103,11 +118,6 @@ pl.plot(srt, ff, label="Reuse 7, No Sectoring")
 # Cell layout WITH SECTORING
 ##############################################################
 fig4 = pl.figure(4)
-ax = fig4.gca()
-figsz = math.ceil((7 * np.exp(1.0)) * 0.75 * radius)
-ax.set_xlim(-figsz, figsz)
-ax.set_ylim(-figsz, figsz)
-ax.set_aspect('equal')
 sectorColorsLight = ["#ddddff", "#007777", "#ffff62"]
 sectorColorsDark = ["#8D8DA2", "#004C4C", "#A2A23E"]
 brush.drawTiersSectored(ntiers, (0, 0), fig4, [sectorColorsDark, sectorColorsLight])
@@ -115,7 +125,7 @@ brush.drawTiersSectored(ntiers, (0, 0), fig4, [sectorColorsDark, sectorColorsLig
 # Interference WITH SECTORING
 ##############################################################
 reusedCells = geome.reuseCellsSectored(ntiers)
-if(len(reusedCells) == 1):
+if(reusedCells == []):
     print("No interference !!")
     sys.exit()
 

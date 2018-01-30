@@ -11,7 +11,7 @@ beta = 120.0
 
 # duration for cell system simulation in secs
 #nch = int(sys.argv[1])
-duration = float(sys.argv[2])
+duration = float(sys.argv[1])
 step = 0.5
 nsteps = duration / step
 nstepsCopy = nsteps
@@ -40,5 +40,7 @@ for nch in nchlist:
     nsteps = nstepsCopy
 
 pl.plot(nchlist, blockPr)
+pl.xlabel('No. of Available Channels')
+pl.ylabel('Blocking Probability')
 pl.grid()
 pl.show()

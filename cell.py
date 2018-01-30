@@ -1,9 +1,28 @@
+#
+#   EE 764
+#   Wireless & Mobile Communication
+#   Simulation Assignment 1
+#
+#   Cell layout and CDF for a configuration
+#
+#   Author: Ritesh
+#   RollNo: 163079001
+#
+# # # # # # # # # # # # # # # # # # # # #
+
 import cellsys as cs
 import sys
 import numpy as np
 import pylab as pl
 import math
 import random
+import argparse
+
+parser = argparse.ArgumentParser(description="Compute interference at one point.")
+parser.add_argument("ntiers", type=int, help="no. of tiers around the reference cell to use")
+parser.add_argument("freuse", type=int, help="reuse factor")
+parser.add_argument("-s", action="store_true", help="enables sectoring; disabled by default")
+args = parser.parse_args()
 
 # cell radius (from center to either of the corners)
 radius = 1000
@@ -16,15 +35,16 @@ pt = 30
 
 # no. of random users in the center cell
 npoints = 2000
+npointsToShow = 400
 
 # for progress bar
 step = round(npoints / 50)
 
 # read no. of tiers from stdin
-ntiers = int(sys.argv[1])
+ntiers = int(args.ntiers)
 
 # read reuse factor from stdin
-freuse = int(sys.argv[2])
+freuse = int(args.freuse)
 
 # initializing my drawing, geometry, interference classes
 # respectively
@@ -32,94 +52,72 @@ brush = cs.draw(radius)
 geome = cs.geom(radius)
 intrf = cs.intf(radius, pt)
 
-reusedCells = geome.reuseCells(ntiers, freuse)
-if(len(reusedCells) == 1):
+if(not args.s):
+    print("No Sectoring")
+    reusedCells = geome.reuseCells(ntiers, freuse)
+else:
+    print("120 degree Sectoring")
+    reusedCells = geome.reuseCellsSectored(ntiers)
+
+if(reusedCells == []):
     print("No interference !!")
     sys.exit()
 
 ##############################################################
-# Cell layout WITHOUT SECTORING
+# Cell Layout
 ##############################################################
-
 fig1 = pl.figure(1)
-brush.drawLayout(ntiers, freuse, reusedCells, fig1)
-
+if(not args.s):
+    brush.drawLayout(ntiers, freuse, reusedCells, fig1)
+else:
+    sectorColorsLight = ["#ddddff", "#007777", "#ffff62"]
+    sectorColorsDark = ["#8D8DA2", "#004C4C", "#A2A23E"]
+    brush.drawTiersSectored(ntiers, (0, 0), fig1, [sectorColorsDark, sectorColorsLight])
 ##############################################################
-# Interference WITHOUT SECTORING
+# Interference
 ##############################################################
-
 precision = 3
 pointsList = []
 sirList = []
 count = npoints
-print("Without Sectoring: ", end='')
+if(not args.s):
+    print("Reuse " + str(freuse) + ", No Sectoring: ", end='')
+else:
+    print("Reuse 1, 120 degrees Sectoring: ", end='')
 while(count > 0):
-    thePoint = geome.getRandomPointInHex()
+    if(not args.s):
+        thePoint = geome.getRandomPointInHex()
+    else:
+        thePoint = geome.getRandomPointInSector()
     pointsList.append(thePoint)
     sir = intrf.getSIR(reusedCells, thePoint, gamma)
     sirList.append(10 * np.log10(sir))
     if(count % step == 0):
-        print('#', end='')
+        print("#", end="")
         sys.stdout.flush()
     count -= 1
-print(' done !')
+print(" done !")
 
 # Plot of random user points in the center hexagon
-brush.drawPointsInHexagon(pointsList, (0, 0), radius, fig1)
+pointsListReduced = [pointsList[i] for i in range(0, npoints, int(npoints / npointsToShow))]
+brush.drawPointsInHexagon(pointsListReduced, (0, 0), radius, fig1)
+if(not args.s):
+    pl.title("Cell layout for Reuse " + str(freuse) + ", No Sectoring")
+else:
+    pl.title("Cell layout for Reuse 1, 120 degrees Sectoring")
 
-cdfFig = pl.figure(2)
-#pl.hist(sirList, 100, label="Reuse " + str(freuse) + ", No Sectoring")
+fig2 = pl.figure(2)
 srt = np.sort(sirList)
-ff = np.array(range(2000)) / float(2000)
-pl.plot(srt, ff, label="Reuse " + str(freuse) + ", No Sectoring")
-
-##############################################################
-# Cell layout WITH SECTORING
-##############################################################
-
-fig3 = pl.figure(3)
-ax = fig3.gca()
-figsz = math.ceil((3 * ntiers) * 0.8 * radius)
-ax.set_xlim(-figsz, figsz)
-ax.set_ylim(-figsz, figsz)
-ax.set_aspect('equal')
-sectorColorsLight = ["#ddddff", "#007777", "#ffff62"]
-sectorColorsDark = ["#8D8DA2", "#004C4C", "#A2A23E"]
-#brush.updateRadius(radius)
-brush.drawTiersSectored(ntiers, (0, 0), fig3, [sectorColorsDark, sectorColorsLight])
-
-##############################################################
-# Interference WITH SECTORING
-##############################################################
-reusedCells = geome.reuseCellsSectored(ntiers)
-if(len(reusedCells) == 1):
-    print("No interference !!")
-    sys.exit()
-
-print("   With Sectoring: ", end='')
-precision = 3
-pointsListS = []
-sirListS = []
-while(npoints > 0):
-    thePoint = geome.getRandomPointInSector()
-    pointsListS.append(thePoint)
-    sir = intrf.getSIR(reusedCells, thePoint, gamma)
-    sirListS.append(10 * np.log10(sir))
-    if(npoints % step == 0):
-        print('#', end='')
-        sys.stdout.flush()
-    npoints -= 1
-print(' done !')
-
-# Plot of random user points in the center hexagon
-#brush.drawPointsInHexagon(pointsListS, (0, 0), radius)
-
-cdfFig = pl.figure(2)
-#pl.hist(sirListS, 100, label="Reuse 1, 120 Sectoring")
-srt = np.sort(sirListS)
-ff = np.array(range(2000)) / float(2000)
-pl.plot(srt, ff, label="Reuse 1, 120 Sectoring")
+ff = np.array(range(npoints)) / float(npoints)
+if(not args.s):
+    sectString = ", Reuse " + str(freuse) + ", No Sectoring"
+else:
+    sectString = ", Reuse 1, 120 degrees Sectoring"
+pl.plot(srt, ff, label="Reuse " + str(freuse) + ", " + sectString)
+pl.title("CDF of SIRs for " + str(npoints) +" Users" + sectString)
+pl.xlabel("SIR in dB")
+pl.ylabel("Probability")
 pl.grid()
-pl.legend(loc='lower right')
+pl.legend()
 
 pl.show()

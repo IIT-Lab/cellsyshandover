@@ -14,9 +14,6 @@ import numpy as np
 import math
 import random
 
-from shapely.geometry import Point
-from shapely.geometry.polygon import Polygon
-
 def ss(theta):
         return np.sin(theta)
 def cc(theta):
@@ -89,7 +86,10 @@ class geom(object):
                     thelist.append((i, r))
             r -= 1
             p += 1
-        return thelist
+        if(len(thelist) == 1):
+            return []
+        else:
+            return thelist
 
     # Gets the list of all reuse cells for the given
     # reuse factor 'rf' upto specified no. of tiers 'ntiers'
@@ -129,18 +129,22 @@ class geom(object):
         return points
 
     def isContainedInHex(self, center, pt):
-        #x = center[0] * np.cos(np.pi / 6)
-        #y = center[1] + (center[0] * np.sin(np.pi / 6))
         pts = self.ijtoxy([center])
         x = pts[0][0]
         y = pts[0][1]
         center = np.asarray([x, y])
-        #center = np.asarray([2 * self.redge * x, 2 * self.redge * y])
+        pt = np.asarray(pt)
 
         vertices = [(center + z) for z in self.basis]
-        theHexagon = Polygon(vertices)
-        pp = Point(pt[0], pt[1])
-        if(theHexagon.contains(pp)):
+        dists = []
+        for i in range(0, len(vertices)):
+            dists.append((np.linalg.norm(pt - vertices[i]), i))
+        dists.sort()
+        vect1 = pt - vertices[dists[0][1]]
+        vect2 = pt - vertices[dists[1][1]] # not actually required, one is enough
+        pav = (vertices[dists[0][1]] + vertices[dists[1][1]]) / 2
+        vectc = pav - center
+        if(np.dot(vect1, vectc) < 0):
             return 1
         else:
             return 0

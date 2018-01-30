@@ -1,18 +1,29 @@
+#
+#   EE 764
+#   Wireless & Mobile Communication
+#   Simulation Assignment 1
+#
+#   Variation of blocking probability with
+#   available no. of channels
+#
+#   Author: Ritesh
+#   RollNo: 163079001
+#
+# # # # # # # # # # # # # # # # # # # # #
+
 import numpy as np
 import pylab as pl
 import sys
-import math
 import random
 
-#np.random.poisson(1.0)
+# arrival rate parameter 1/second
 lambd = 1.0
-#np.random.exponential(120.0)
+# leaving rate parameter 1/(120 seconds)
 beta = 120.0
 
 # duration for cell system simulation in secs
-#nch = int(sys.argv[1])
 duration = float(sys.argv[1])
-step = 0.5
+step = 0.2
 nsteps = duration / step
 nstepsCopy = nsteps
 
@@ -28,12 +39,12 @@ for nch in nchlist:
         dep = np.random.binomial(1, nused * (1 / beta) * step)
         narrivals += arr
         nused -= dep
+
         if(nused < nch):
-            if(arr):
-                nused += arr
+            nused += arr
         else:
-            if(arr):
-                nblocks += 1
+            nblocks += arr
+
         nsteps -= 1
     print((narrivals, nblocks, (nblocks / narrivals)))
     blockPr.append(nblocks / narrivals)

@@ -39,8 +39,7 @@ class intf(object):
     def getSIR(self, icells, p, gamma):
         interference = 0
         for cell in icells:
-            if(cell[0] == 0 and cell[1] == 0):
-                ####### something
+            if(cell == (0, 0)):
                 continue
             else:
                 # the third argument can be anything as the pt term

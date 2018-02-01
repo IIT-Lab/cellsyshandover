@@ -17,107 +17,129 @@ import pylab as pl
 import math
 import random
 import argparse
-
-parser = argparse.ArgumentParser(description="Compute interference at one point.")
-parser.add_argument("ntiers", type=int, help="no. of tiers around the reference cell to use")
-parser.add_argument("freuse", type=int, help="reuse factor")
-parser.add_argument("-s", action="store_true", help="enables sectoring; disabled by default")
-args = parser.parse_args()
+import matplotlib.patches as patches
 
 # cell radius (from center to either of the corners)
-radius = 1000
+radius = 250
 
-# gamma
-gamma = 3.5
+# bouncing circle radius
+bounceCircleRadius = 3.12 * radius
 
 # transmit power of base station (dBm)
 pt = 30
 
-# no. of random users in the center cell
-npoints = 2000
-npointsToShow = 400
-
-# for progress bar
-step = round(npoints / 50)
-
-# read no. of tiers from stdin
-ntiers = int(args.ntiers)
-
-# read reuse factor from stdin
-freuse = int(args.freuse)
+# 2 tiers
+ntiers = 2
 
 # initializing my drawing, geometry, interference classes
 # respectively
 brush = cs.draw(radius)
-geome = cs.geom(radius)
-intrf = cs.intf(radius, pt)
-
-if(not args.s):
-    print("No Sectoring")
-    reusedCells = geome.reuseCells(ntiers, freuse)
-else:
-    print("120 degree Sectoring")
-    reusedCells = geome.reuseCellsSectored(ntiers)
-
-if(reusedCells == []):
-    print("No interference !!")
-    sys.exit()
+geometry = cs.geom(radius)
+signal = cs.intf(radius, pt)
 
 ##############################################################
 # Cell Layout
 ##############################################################
 fig1 = pl.figure(1)
-if(not args.s):
-    brush.drawLayout(ntiers, freuse, reusedCells, fig1)
-else:
-    sectorColorsLight = ["#ddddff", "#007777", "#ffff62"]
-    sectorColorsDark = ["#8D8DA2", "#004C4C", "#A2A23E"]
-    brush.drawTiersSectored(ntiers, (0, 0), fig1, [sectorColorsDark, sectorColorsLight])
-##############################################################
-# Interference
-##############################################################
-precision = 3
-pointsList = []
-sirList = []
-count = npoints
-if(not args.s):
-    print("Reuse " + str(freuse) + ", No Sectoring: ", end='')
-else:
-    print("Reuse 1, 120 degrees Sectoring: ", end='')
-while(count > 0):
-    if(not args.s):
-        thePoint = geome.getRandomPointInHex()
+hexList = brush.drawTiersSimple(ntiers, fig1, "#EEEEEE")
+axis = fig1.gca()
+axis.add_patch(patches.Circle((0, 0), bounceCircleRadius, fill=False, ec="#0000FF"))
+# Mobile Unit
+startPoint = geometry.getRandomPointInHex()
+pl.scatter(startPoint[0], startPoint[1], s=5, color='#DB3236', zorder=101)
+speed = 3 * 5 / 18
+angle = 2 * np.pi * np.random.uniform()
+directVector = np.asarray([np.cos(angle), np.sin(angle)])
+
+speed1 = speed
+speed2 = 30 * 5 / 18
+speed3 = 120 * 5 / 18
+
+# Hysterisis in dB
+H = 2
+
+nhandoffs = 0
+# t in ms
+# 50ms is the time resolution for computing RSS
+t = 0
+#tstep = 4000 * 0.05
+tstep = 0.05
+prevLoc = startPoint
+k = 0
+
+movAvN = 1
+movAvFullList = signal.getRSS(startPoint, hexList)
+movAvValues = movAvFullList
+# Assume last value is the latest
+movAvFullList = [[x[1], ([x[0]] * movAvN)] for x in movAvFullList]
+currentCell = (0, 0)
+#while(k <= 5):
+pingPongCounter = 0
+timeCounter = 0
+lastHandoff = [(0, 0), (0, 0)]
+while(nhandoffs < 200):
+    newLoc = prevLoc + (speed3 * tstep * directVector)
+    if(geometry.isContainedInCircle(newLoc, (0, 0), bounceCircleRadius)):
+        prevLoc = newLoc
     else:
-        thePoint = geome.getRandomPointInSector()
-    pointsList.append(thePoint)
-    sir = intrf.getSIR(reusedCells, thePoint, gamma)
-    sirList.append(10 * np.log10(sir))
-    if(count % step == 0):
-        print("#", end="")
-        sys.stdout.flush()
-    count -= 1
-print(" done !")
+        #print("reflection")
+        (directVector, poi) = geometry.changeDirection(startPoint, directVector, bounceCircleRadius, np.asarray([0, 0]))
+        dist = np.linalg.norm(poi - prevLoc)
+        diff = (speed * tstep) - dist
+        newLoc = poi + (diff * directVector)
+        prevLoc = newLoc
+        startPoint = poi
+    pl.scatter(newLoc[0], newLoc[1], s=0.1, color='#00FF00', zorder=100)
+    rssList = signal.getRSS(newLoc, hexList)
+    #print([x[1] for x in rssList])
+    # Updating the rss moving average values
 
-# Plot of random user points in the center hexagon
-pointsListReduced = [pointsList[i] for i in range(0, npoints, int(npoints / npointsToShow))]
-brush.drawPointsInHexagon(pointsListReduced, (0, 0), radius, fig1)
-if(not args.s):
-    pl.title("Cell layout for Reuse " + str(freuse) + ", No Sectoring")
-else:
-    pl.title("Cell layout for Reuse 1, 120 degrees Sectoring")
+    for cell in rssList:
+        [x[1].pop(0) for x in movAvFullList if (x[0] == cell[1])]
+        [x[1].append(cell[0]) for x in movAvFullList if (x[0] == cell[1])]
+        newAv = np.mean([x[1] for x in movAvFullList if (x[0] == cell[1])])
+        index = [i for i in range(0, len(movAvValues)) if (movAvValues[i][1] == cell[1])]
+        movAvValues[index[0]][0] = newAv
+    """
+    for i in range(0, len(movAvValues)):
+        movAvFullList[i][1].pop(0)
+        movAvFullList[i][1].append(rssList[i][0])
+        movAvValues[i][0] = np.mean(movAvFullList[i][1])
+    """
+    movAvValues.sort()
+    rev = movAvValues
+    rev.reverse()
+    v1 = rev[0]
+    v2 = rev[1]
+    currentCellRSS = [x[0] for x in movAvValues if (x[1] == currentCell)]
+    currentCellRSS = currentCellRSS[0]
+    if(v1[0] > (currentCellRSS + H)):
+    #if(v1[0] > (v2[0] + H)):
+        if(v1[1] != currentCell):
+            # perform handoff !!
+            #print("Handoff !! " + str(currentCell) + " -> " + str(v1[1]))
+            #sys.stdout.write("\033[K")
+            sys.stdout.write("\r")
+            progress = int((nhandoffs / 200) * 100) + 1
+            percent = "{:2}".format(progress)
+            sys.stdout.write(" " + percent + " % ")
+            [print("#", end="") for i in range(0, int(progress / 2))]
+            #print(percent + " %")
+            sys.stdout.flush()
+            currentHandoff = [currentCell, v1[1]]
+            nhandoffs += 1
+            if((lastHandoff[0] == currentHandoff[1]) and (lastHandoff[1] == currentHandoff[0])):
+                # ping pong !!
+                if(timeCounter < 1):
+                    pingPongCounter += 1
+            lastHandoff = [currentCell, v1[1]]
+            currentCell = v1[1]
+            timeCounter = 0
+            #pl.scatter(newLoc[0], newLoc[1], s=5, color='#00FF00', zorder=102)
+            pl.scatter(newLoc[0], newLoc[1], s=10, facecolors='none', color='#DB3236', zorder=200)
+    timeCounter += tstep
+    k += 1
 
-fig2 = pl.figure(2)
-srt = np.sort(sirList)
-ff = np.array(range(npoints)) / float(npoints)
-if(not args.s):
-    sectString = ", Reuse " + str(freuse) + ", No Sectoring"
-else:
-    sectString = ", Reuse 1, 120 degrees Sectoring"
-pl.plot(srt, ff, label="Reuse " + str(freuse) + ", " + sectString)
-pl.title("CDF of SIRs for " + str(npoints) +" Users" + sectString)
-pl.xlabel("SIR in dB")
-pl.ylabel("Probability")
-pl.grid()
-pl.legend()
-
+print()
+print(("PPR", pingPongCounter, nhandoffs))
 pl.show()

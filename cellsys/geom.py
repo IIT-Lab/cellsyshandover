@@ -128,6 +128,37 @@ class geom(object):
         points = [(p1 + (alpha * diff)) for alpha in alphas]
         return points
 
+    def isContainedInCircle(self, p, center, radius):
+        p = np.asarray(p)
+        center = np.asarray(center)
+        dist = np.linalg.norm(p - center)
+        if(dist >= radius):
+            return 0
+        else:
+            return 1
+
+    def changeDirection(self, start, direct, radius, center):
+        a = start[0]
+        b = start[1]
+        c = direct[0]
+        d = direct[1]
+        r = radius
+        A = (c * c) + (d * d)
+        B = 2 * ((a * c) + (b * d))
+        C = (a * a) + (b * b) - (r * r)
+        D = (B * B) - (4 * A * C)
+        Dsqrt = np.sqrt(D)
+        sol1 = ((-1 * B) + Dsqrt) / (2 * A)
+        sol2 = ((-1 * B) - Dsqrt) / (2 * A)
+        alpha = max([sol1, sol2])
+        poi = start + (alpha * direct)
+        normal = poi - center
+        normalNormal = normal / np.linalg.norm(normal)
+        component = np.dot(normalNormal, direct)
+        direct = direct - (2 * component * normalNormal)
+        #print(("poiAndNormalDirect", poi, normal, direct))
+        return (direct, poi)
+
     def isContainedInHex(self, center, pt):
         pts = self.ijtoxy([center])
         x = pts[0][0]
@@ -158,7 +189,7 @@ class geom(object):
             pr = np.sqrt(self.radius * self.radius * random.randint(0, 10 ** precision) / float(10 ** precision))
             theta = 2 * np.pi * random.random()
             thePoint = (pr * np.cos(theta), pr * np.sin(theta))
-        return thePoint
+        return np.asarray(thePoint)
 
     def getRandomPointInSector(self):
         precision = 3

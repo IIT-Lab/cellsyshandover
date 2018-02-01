@@ -59,6 +59,7 @@ class draw(object):
         eclr[0] = '#'
         axis = fig.gca()
         axis.add_patch(patches.RegularPolygon((center[0], center[1]), 6, self.radius, orientation=(np.pi/2), fc=fclr, ec=''.join(eclr)))
+        pl.scatter(center[0], center[1], s=10, facecolors='none', color='#345678', zorder=100)
 
     def drawHexSectored(self, ci, cj, fig, fclr):
         x = ci * np.cos(np.pi / 6)
@@ -75,7 +76,36 @@ class draw(object):
         for i in range(0, 3):
             axis.add_patch(patches.Polygon(np.asarray(sverts[i]), fc=fclr[i], ec=fclr[i]))
 
+    def drawTiersSimple(self, ntiers, fig, clr):
+        ax = fig.gca()
+        figsz = math.ceil((2 * (ntiers + 1)) * self.redge)
+        ax.set_xlim(-figsz, figsz)
+        ax.set_ylim(-figsz, figsz)
+        ax.set_aspect('equal')
+        p = -1 * ntiers
+        q = 0
+        r = ntiers
+        hexlist = []
+        while(q < ntiers):
+            for i in range(p, q + 1):
+                hexlist.append((i, r))
+                self.drawHex(i, r, fig, clr)
+            r -= 1
+            q += 1
+        while(p <= 0):
+            for i in range(p, q + 1):
+                hexlist.append((i, r))
+                self.drawHex(i, r, fig, clr)
+            r -= 1
+            p += 1
+        return hexlist
+
     def drawTiers(self, ntiers, off, fig, clr):
+        ax = fig.gca()
+        figsz = math.ceil((2 * (ntiers + 1)) * self.redge)
+        ax.set_xlim(-figsz, figsz)
+        ax.set_ylim(-figsz, figsz)
+        ax.set_aspect('equal')
         #######
         x = off[0] * cc(np.pi / 6)
         y = off[1] + (off[0] * ss(np.pi / 6))

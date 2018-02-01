@@ -11,6 +11,7 @@
 # # # # # # # # # # # # # # # # # # # # #
 
 import numpy as np
+from .geom import *
 
 def s(theta):
         return np.sin(theta)
@@ -35,6 +36,20 @@ class intf(object):
         dist = np.linalg.norm(center - p)
         interference = ptw / (dist ** gamma)
         return interference
+    def getRSS(self, p, cells):
+        rssList = []
+        g = geom(self.radius)
+        cellsxy = g.ijtoxy(cells)
+        p = np.asarray(p)
+        for i in range(0, len(cellsxy)):
+            cell = np.asarray(cellsxy[i])
+            dist = np.linalg.norm(p - cell)
+            x = np.random.exponential(1.0)
+            rss = self.ptransmit - (15.3 + (37.6 * np.log10(dist))) + (10 * np.log10(x))
+            #rss = self.ptransmit - (15.3 + (37.6 * np.log10(dist)))
+            rssList.append([rss, cells[i]])
+        rssList.sort()
+        return rssList
 
     def getSIR(self, icells, p, gamma):
         interference = 0

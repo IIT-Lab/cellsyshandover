@@ -36,19 +36,32 @@ class intf(object):
         dist = np.linalg.norm(center - p)
         interference = ptw / (dist ** gamma)
         return interference
-    def getRSS(self, p, cells):
+
+    def getRSS(self, p, cells, sort, xy):
+        """
+        p: the poin where RSS is computed
+        cells: the list of cells from which RSS is to be computed
+        sort: sort or not ? 1 for sorting, 0 for not sorting
+        xy: coordinates for cells in cartesian x,y or not ? 1 for yes, 0 for no
+        """
+        if(not xy):
+            g = geom(self.radius)
+            cellsxy = g.ijtoxy(cells)
+        else:
+            cellsxy = cells
         rssList = []
-        g = geom(self.radius)
-        cellsxy = g.ijtoxy(cells)
         p = np.asarray(p)
-        for i in range(0, len(cellsxy)):
-            cell = np.asarray(cellsxy[i])
+        for cell in cellsxy:
+        #for i in range(0, len(cellsxy)):
+            #cell = cellsxy[i]
             dist = np.linalg.norm(p - cell)
             x = np.random.exponential(1.0)
             rss = self.ptransmit - (15.3 + (37.6 * np.log10(dist))) + (10 * np.log10(x))
             #rss = self.ptransmit - (15.3 + (37.6 * np.log10(dist)))
-            rssList.append([rss, cells[i]])
-        rssList.sort()
+            #rssList.append([rss, cells[i]])
+            rssList.append([rss, cell])
+        if(sort):
+            rssList.sort()
         return rssList
 
     def getSIR(self, icells, p, gamma):

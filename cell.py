@@ -56,7 +56,7 @@ speed2 = 30 * 5 / 18
 speed3 = 120 * 5 / 18
 
 # Hysterisis in dB
-H = 2
+H = int(sys.argv[1])
 
 nhandoffs = 0
 # t in ms
@@ -67,7 +67,7 @@ tstep = 0.05
 prevLoc = startPoint
 k = 0
 
-movAvN = 1
+movAvN = 10
 movAvFullList = signal.getRSS(startPoint, hexList)
 movAvValues = movAvFullList
 # Assume last value is the latest
@@ -82,17 +82,14 @@ while(nhandoffs < 200):
     if(geometry.isContainedInCircle(newLoc, (0, 0), bounceCircleRadius)):
         prevLoc = newLoc
     else:
-        #print("reflection")
         (directVector, poi) = geometry.changeDirection(startPoint, directVector, bounceCircleRadius, np.asarray([0, 0]))
         dist = np.linalg.norm(poi - prevLoc)
-        diff = (speed * tstep) - dist
+        diff = (speed3 * tstep) - dist
         newLoc = poi + (diff * directVector)
         prevLoc = newLoc
         startPoint = poi
     pl.scatter(newLoc[0], newLoc[1], s=0.1, color='#00FF00', zorder=100)
     rssList = signal.getRSS(newLoc, hexList)
-    #print([x[1] for x in rssList])
-    # Updating the rss moving average values
 
     for cell in rssList:
         [x[1].pop(0) for x in movAvFullList if (x[0] == cell[1])]
@@ -100,31 +97,23 @@ while(nhandoffs < 200):
         newAv = np.mean([x[1] for x in movAvFullList if (x[0] == cell[1])])
         index = [i for i in range(0, len(movAvValues)) if (movAvValues[i][1] == cell[1])]
         movAvValues[index[0]][0] = newAv
-    """
-    for i in range(0, len(movAvValues)):
-        movAvFullList[i][1].pop(0)
-        movAvFullList[i][1].append(rssList[i][0])
-        movAvValues[i][0] = np.mean(movAvFullList[i][1])
-    """
+
     movAvValues.sort()
-    rev = movAvValues
-    rev.reverse()
-    v1 = rev[0]
-    v2 = rev[1]
+    #rev = movAvValues
+    #rev.reverse()
+    #v1 = rev[0]
+    v1 = max(movAvValues)
     currentCellRSS = [x[0] for x in movAvValues if (x[1] == currentCell)]
     currentCellRSS = currentCellRSS[0]
     if(v1[0] > (currentCellRSS + H)):
-    #if(v1[0] > (v2[0] + H)):
         if(v1[1] != currentCell):
-            # perform handoff !!
+            #perform handoff !!
             #print("Handoff !! " + str(currentCell) + " -> " + str(v1[1]))
-            #sys.stdout.write("\033[K")
             sys.stdout.write("\r")
             progress = int((nhandoffs / 200) * 100) + 1
             percent = "{:2}".format(progress)
             sys.stdout.write(" " + percent + " % ")
             [print("#", end="") for i in range(0, int(progress / 2))]
-            #print(percent + " %")
             sys.stdout.flush()
             currentHandoff = [currentCell, v1[1]]
             nhandoffs += 1
@@ -135,7 +124,6 @@ while(nhandoffs < 200):
             lastHandoff = [currentCell, v1[1]]
             currentCell = v1[1]
             timeCounter = 0
-            #pl.scatter(newLoc[0], newLoc[1], s=5, color='#00FF00', zorder=102)
             pl.scatter(newLoc[0], newLoc[1], s=10, facecolors='none', color='#DB3236', zorder=200)
     timeCounter += tstep
     k += 1

@@ -129,8 +129,6 @@ class geom(object):
         return points
 
     def isContainedInCircle(self, p, center, radius):
-        p = np.asarray(p)
-        center = np.asarray(center)
         dist = np.linalg.norm(p - center)
         if(dist >= radius):
             return 0
@@ -156,7 +154,6 @@ class geom(object):
         normalNormal = normal / np.linalg.norm(normal)
         component = np.dot(normalNormal, direct)
         direct = direct - (2 * component * normalNormal)
-        #print(("poiAndNormalDirect", poi, normal, direct))
         return (direct, poi)
 
     def isContainedInHex(self, center, pt):

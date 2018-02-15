@@ -59,7 +59,7 @@ class draw(object):
         eclr[0] = '#'
         axis = fig.gca()
         axis.add_patch(patches.RegularPolygon((center[0], center[1]), 6, self.radius, orientation=(np.pi/2), fc=fclr, ec=''.join(eclr)))
-        pl.scatter(center[0], center[1], s=10, facecolors='none', color='#345678', zorder=100)
+        pl.scatter(center[0], center[1], s=10, facecolors='none', color='#BBBBBB', zorder=100)
 
     def drawHexSectored(self, ci, cj, fig, fclr):
         x = ci * np.cos(np.pi / 6)
